@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "rohlik": {
+      "command": "rohlik-mcp",
+      "args": []
+    }
+  }
+}
