@@ -21,6 +21,8 @@ Personal AI assistant. See [README.md](README.md) for philosophy and setup. Arch
 
 The host is a single Node process that orchestrates per-session agent containers. Platform messages land via channel adapters, route through an entity model (users → messaging groups → agent groups → sessions), get written into the session's inbound DB, and wake a container. The agent-runner inside the container polls the DB, calls the agent, and writes back to the outbound DB. The host polls the outbound DB and delivers through the same adapter.
 
+This instance is configured as a grocery shopping assistant. It reaches Rohlik.cz through the [rohlik-mcp](https://github.com/tomaspavlin/rohlik-mcp) MCP server, declared per agent group in `groups/<group>/container.json` (`packages.npm` installs it, `mcpServers.rohlik` launches it) — not baked into the container image as it was in v1. The four grocery skills in `container/skills/` drive it.
+
 **Everything is a message.** There is no IPC, no file watcher, no stdin piping between host and container. The two session DBs are the sole IO surface.
 
 ## Entity Model
