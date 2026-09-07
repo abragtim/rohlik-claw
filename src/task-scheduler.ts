@@ -19,6 +19,7 @@ import {
 import { GroupQueue } from './group-queue.js';
 import { resolveGroupFolderPath } from './group-folder.js';
 import { logger } from './logger.js';
+import { heartbeat, SCHEDULER_LOOP } from './watchdog.js';
 import { RegisteredGroup, ScheduledTask } from './types.js';
 
 /**
@@ -249,6 +250,7 @@ export function startSchedulerLoop(deps: SchedulerDependencies): void {
   logger.info('Scheduler loop started');
 
   const loop = async () => {
+    heartbeat(SCHEDULER_LOOP);
     try {
       const dueTasks = getDueTasks();
       if (dueTasks.length > 0) {
