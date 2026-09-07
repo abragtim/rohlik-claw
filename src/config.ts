@@ -56,6 +56,22 @@ export const CREDENTIAL_PROXY_PORT = parseInt(
   10,
 );
 export const IPC_POLL_INTERVAL = 1000;
+
+// Watchdog deadlines (see watchdog.ts). A process that hangs without exiting
+// is invisible to systemd, so both the startup path and the long-lived loops
+// get a deadline that turns a hang into a restartable non-zero exit.
+export const STARTUP_TIMEOUT = parseInt(
+  process.env.STARTUP_TIMEOUT || '600000',
+  10,
+); // 10min — long enough to outlast WhatsApp reconnect backoff on a bad network
+export const LOOP_STALL_TIMEOUT = parseInt(
+  process.env.LOOP_STALL_TIMEOUT || '300000',
+  10,
+); // 5min — the slowest loop ticks once a minute
+export const WATCHDOG_CHECK_INTERVAL = parseInt(
+  process.env.WATCHDOG_CHECK_INTERVAL || '30000',
+  10,
+);
 export const IDLE_TIMEOUT = parseInt(process.env.IDLE_TIMEOUT || '1800000', 10); // 30min default — how long to keep container alive after last result
 export const MAX_CONCURRENT_CONTAINERS = Math.max(
   1,
