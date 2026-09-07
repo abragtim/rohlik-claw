@@ -63,6 +63,11 @@ export class WhatsAppChannel implements Channel {
   private reconnectTimer?: NodeJS.Timeout;
   private stallTimer?: NodeJS.Timeout;
   private shuttingDown = false;
+  // Resolver for the initial connect() promise. Lives on the instance because
+  // the first attempt may never open: the reconnect chain re-enters
+  // connectInternal() without it, and main() stays blocked forever if the
+  // resolver was only captured in that first call's scope.
+  private onFirstOpen?: () => void;
 
   private opts: WhatsAppChannelOpts;
 
@@ -77,6 +82,7 @@ export class WhatsAppChannel implements Channel {
   }
 
   private async connectInternal(onFirstOpen?: () => void): Promise<void> {
+    if (onFirstOpen) this.onFirstOpen = onFirstOpen;
     // Drop the previous socket up front. Its listeners must not be able to
     // start a competing reconnect chain while we set the replacement up.
     this.teardownSocket();
@@ -189,10 +195,10 @@ export class WhatsAppChannel implements Channel {
           }, GROUP_SYNC_INTERVAL_MS);
         }
 
-        // Signal first connection to caller
-        if (onFirstOpen) {
-          onFirstOpen();
-          onFirstOpen = undefined;
+        // Signal first connection to caller (whichever attempt opened first)
+        if (this.onFirstOpen) {
+          this.onFirstOpen();
+          this.onFirstOpen = undefined;
         }
       }
     });

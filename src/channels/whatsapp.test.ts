@@ -376,6 +376,34 @@ describe('WhatsAppChannel', () => {
       mockExit.mockRestore();
     });
 
+    it('resolves connect() when only a later reconnect attempt opens', async () => {
+      // Regression: the connect() resolver used to be scoped to the first
+      // attempt, so a first attempt that closed before opening left main()
+      // awaiting connect() forever — process alive, message loop never started.
+      vi.useFakeTimers();
+      const opts = createTestOpts();
+      const channel = new WhatsAppChannel(opts);
+
+      let resolved = false;
+      const connecting = channel.connect().then(() => {
+        resolved = true;
+      });
+      await vi.advanceTimersByTimeAsync(0);
+
+      // First attempt dies before it ever opens.
+      triggerDisconnect(408);
+      await vi.advanceTimersByTimeAsync(5000);
+      expect(resolved).toBe(false);
+
+      // The reconnect opens — connect() must settle on it.
+      triggerConnection('open');
+      await connecting;
+
+      expect(resolved).toBe(true);
+      expect(channel.isConnected()).toBe(true);
+      await channel.disconnect();
+    });
+
     it('retries reconnection after 5s on failure', async () => {
       vi.useFakeTimers();
       const opts = createTestOpts();

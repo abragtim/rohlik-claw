@@ -58,6 +58,14 @@ import {
 } from './sender-allowlist.js';
 import { startSchedulerLoop } from './task-scheduler.js';
 import { Channel, NewMessage, RegisteredGroup } from './types.js';
+import {
+  armStartupWatchdog,
+  disarmStartupWatchdog,
+  heartbeat,
+  MESSAGE_LOOP,
+  SCHEDULER_LOOP,
+  startLivenessWatchdog,
+} from './watchdog.js';
 import { parseImageReferences } from './image.js';
 import { logger } from './logger.js';
 
@@ -363,8 +371,10 @@ async function startMessageLoop(): Promise<void> {
   messageLoopRunning = true;
 
   logger.info(`NanoClaw running (trigger: @${ASSISTANT_NAME})`);
+  disarmStartupWatchdog();
 
   while (true) {
+    heartbeat(MESSAGE_LOOP);
     try {
       const jids = Object.keys(registeredGroups);
       const { messages, newTimestamp } = getNewMessages(
@@ -480,6 +490,9 @@ function ensureContainerSystemRunning(): void {
 }
 
 async function main(): Promise<void> {
+  // Armed before anything that can block (channel connect, in particular);
+  // startMessageLoop disarms it once the loop is actually running.
+  armStartupWatchdog();
   ensureContainerSystemRunning();
   initDatabase();
   logger.info('Database initialized');
@@ -663,6 +676,7 @@ async function main(): Promise<void> {
     logger.fatal({ err }, 'Message loop crashed unexpectedly');
     process.exit(1);
   });
+  startLivenessWatchdog([MESSAGE_LOOP, SCHEDULER_LOOP]);
 }
 
 // Guard: only run when executed directly, not when imported by tests
