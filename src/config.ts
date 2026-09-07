@@ -63,16 +63,17 @@ export const IPC_POLL_INTERVAL = 1000;
 //
 // These are deliberately far longer than the tick rates they watch (message
 // loop every 2s, scheduler every 60s). The assistant is used a few times a
-// day, so a wedge that goes unnoticed for an hour costs nothing, while a tight
-// deadline risks killing a process that was merely slow. Detect, don't police.
+// day, so a wedge that goes unnoticed for twenty minutes costs nothing, while
+// a tight deadline risks killing a process that was merely slow. Detect,
+// don't police.
 export const STARTUP_TIMEOUT = parseInt(
   process.env.STARTUP_TIMEOUT || '1200000',
   10,
-); // 1h — outlasts any WhatsApp reconnect backoff, even on a bad network
+); // 20min — outlasts any WhatsApp reconnect backoff, even on a bad network
 export const LOOP_STALL_TIMEOUT = parseInt(
   process.env.LOOP_STALL_TIMEOUT || '1200000',
   10,
-); // 1h — 60x the slowest loop's tick, so only a real wedge trips it
+); // 20min — 20x the slowest loop's tick, so only a real wedge trips it
 export const WATCHDOG_CHECK_INTERVAL = parseInt(
   process.env.WATCHDOG_CHECK_INTERVAL || '300000',
   10,
